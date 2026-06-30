@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Calculadora AASHTO 1993</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Diseño de pavimento flexible</p>
+          <h1>Calculadora AASHTO 1993</h1>
+        </div>
+        <div class="top-actions">
+          <button class="icon-btn" id="resetBtn" type="button" title="Restaurar valores del Excel">
+            <span aria-hidden="true">↺</span>
+            <span>Restaurar</span>
+          </button>
+          <button class="icon-btn primary" id="printBtn" type="button" title="Imprimir o guardar reporte">
+            <span aria-hidden="true">▣</span>
+            <span>Reporte</span>
+          </button>
+        </div>
+      </header>
+
+      <section class="summary-grid" aria-label="Resumen del diseño">
+        <article class="metric">
+          <span class="metric-label">SN requerido</span>
+          <strong id="snRequired">0.00</strong>
+          <small id="w18Check">W18 verificado</small>
+        </article>
+        <article class="metric">
+          <span class="metric-label">Mejor alternativa</span>
+          <strong id="bestAlt">-</strong>
+          <small id="bestAltDetail">Sin alternativas válidas</small>
+        </article>
+        <article class="metric">
+          <span class="metric-label">Cumplimiento</span>
+          <strong id="passRate">0%</strong>
+          <small id="passCount">0 de 10 alternativas</small>
+        </article>
+        <article class="metric">
+          <span class="metric-label">Mr subrasante</span>
+          <strong id="mrResult">0 psi</strong>
+          <small id="mrHint">Calculado desde CBR</small>
+        </article>
+      </section>
+
+      <section class="workspace">
+        <form class="panel inputs-panel" id="inputForm">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Datos editables</p>
+              <h2>Parámetros de entrada</h2>
+            </div>
+          </div>
+
+          <div class="input-grid">
+            <label>
+              <span>W18, ESALs</span>
+              <input id="w18" type="number" min="1" step="1" />
+            </label>
+            <label>
+              <span>Confiabilidad R</span>
+              <select id="reliability"></select>
+            </label>
+            <label>
+              <span>So, desviación estándar</span>
+              <input id="so" type="number" min="0.1" max="1" step="0.01" />
+            </label>
+            <label>
+              <span>Método Mr</span>
+              <select id="mrMethod">
+                <option value="CBR">CBR</option>
+                <option value="Directo">Directo</option>
+              </select>
+            </label>
+            <label id="cbrField">
+              <span>CBR subrasante</span>
+              <input id="cbr" type="number" min="1" max="50" step="0.1" />
+            </label>
+            <label id="mrDirectField">
+              <span>Mr directo, psi</span>
+              <input id="mrDirect" type="number" min="1500" max="50000" step="100" />
+            </label>
+            <label>
+              <span>Po, serviciabilidad inicial</span>
+              <select id="po"></select>
+            </label>
+            <label>
+              <span>Pt, serviciabilidad final</span>
+              <select id="pt"></select>
+            </label>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="coeff-grid">
+            <label>
+              <span>a1 capa asfáltica</span>
+              <select id="a1"></select>
+            </label>
+            <label>
+              <span>a2 base</span>
+              <select id="a2"></select>
+            </label>
+            <label>
+              <span>a3 subbase</span>
+              <select id="a3"></select>
+            </label>
+            <label>
+              <span>m2 drenaje base</span>
+              <select id="m2"></select>
+            </label>
+            <label>
+              <span>m3 drenaje subbase</span>
+              <select id="m3"></select>
+            </label>
+          </div>
+        </form>
+
+        <aside class="panel diagram-panel">
+          <div class="panel-header compact">
+            <div>
+              <p class="eyebrow">Sección seleccionada</p>
+              <h2 id="sectionTitle">Alternativa óptima</h2>
+            </div>
+          </div>
+          <div class="pavement-visual" aria-hidden="true">
+            <div class="layer asphalt" id="layerAsphalt"><span>Asfalto</span></div>
+            <div class="layer base" id="layerBase"><span>Base</span></div>
+            <div class="layer subbase" id="layerSubbase"><span>Subbase</span></div>
+            <div class="layer soil"><span>Subrasante</span></div>
+          </div>
+          <dl class="section-stats">
+            <div><dt>D1</dt><dd id="bestD1">- pulg</dd></div>
+            <div><dt>D2</dt><dd id="bestD2">- pulg</dd></div>
+            <div><dt>D3</dt><dd id="bestD3">- pulg</dd></div>
+            <div><dt>SN total</dt><dd id="bestSn">-</dd></div>
+          </dl>
+        </aside>
+      </section>
+
+      <section class="panel alternatives-panel">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Verificación de alternativas</p>
+            <h2>Espesores y cumplimiento</h2>
+          </div>
+          <div class="segmented" role="group" aria-label="Modo de edición">
+            <button type="button" class="segment active" data-mode="table">Tabla</button>
+            <button type="button" class="segment" data-mode="reference">Referencias</button>
+          </div>
+        </div>
+
+        <div id="tableView" class="table-wrap">
+          <table class="design-table">
+            <thead id="altHead"></thead>
+            <tbody id="altBody"></tbody>
+          </table>
+        </div>
+
+        <div id="referenceView" class="reference-view hidden">
+          <article>
+            <h3>Coeficientes estructurales</h3>
+            <div id="coefRefs" class="reference-grid"></div>
+          </article>
+          <article>
+            <h3>Confiabilidad y serviciabilidad</h3>
+            <div id="serviceRefs" class="reference-grid"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel equation-panel">
+        <div>
+          <p class="eyebrow">Método iterativo de punto fijo</p>
+          <h2>Ecuación implementada</h2>
+        </div>
+        <p>
+          El aplicativo replica la lógica del libro: calcula Mr desde CBR o valor directo, obtiene ZR por confiabilidad,
+          itera el número estructural SN y compara cada alternativa contra el SN requerido redondeado a dos decimales.
+        </p>
+        <code>log10(W18) = ZR·So + 9.36·log10(SN+1) - 0.20 + log10(ΔPSI/2.7)/(0.4 + 1094/(SN+1)^5.19) + 2.32·log10(Mr) - 8.07</code>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
